@@ -155,6 +155,8 @@ configs <- lapply(args$config, function(x){
 names(configs) <- sapply(configs, "[[", "Run_Name")
 
 ## Load reference genome 
+if( !args$quiet ) cat("Load reference genomes.\n\n")
+
 if( grepl(".fa", unique(sapply(configs, "[[", "Ref_Genome"))) ){
   
   if( !(
@@ -978,6 +980,7 @@ probable_algns$on.off.target <- ifelse(
 )
 
 cat("\nOn / Off target alignment counts:\n")
+print(probable_algns$on.off.target)
 print(table(probable_algns$on.off.target))
 
 
@@ -1824,7 +1827,8 @@ enrich_df$onco.p.value <- p.adjust(
         c(ref$diff, ref$onco, query$diff, query$onco),
         nrow = 2
       )
-      
+      print(mat)
+      mat[is.na(mat)] <- 0
       fisher.test(mat)$p.value
       
     }
@@ -1846,7 +1850,8 @@ enrich_df$special.p.value <- p.adjust(
         c(ref$diff, ref$special, query$diff, query$special),
         nrow = 2
       )
-      
+      print(mat)
+      mat[is.na(mat)] <- 0
       fisher.test(mat)$p.value
       
     }
@@ -1856,30 +1861,33 @@ enrich_df$special.p.value <- p.adjust(
 
 enrich_df <- enrich_df %>%
   dplyr::mutate(
-    onco.power = sapply(seq_len(n()), function(i){
-
-      statmod::power.fisher.test(
-        p1 = onco[1] / total[1],
-        p2 = onco[i] / total[i],
-        n1 = total[1], n2 = total[i]
-      )
-
-    }),
-    special.power = sapply(seq_len(n()), function(i){
-
-      statmod::power.fisher.test(
-        p1 = special[1] / total[1],
-        p2 = special[i] / total[i],
-        n1 = total[1], n2 = total[i]
-      )
-
-    })
+    onco.power = NA
+# = sapply(seq_len(n()), function(i){
+#
+#       statmod::power.fisher.test(
+#        p1 = onco[1] / total[1],
+#        p2 = onco[i] / total[i],
+#        n1 = total[1], n2 = total[i]
+#     )
+#
+#     })
+    ,
+    special.power = NA
+#  = sapply(seq_len(n()), function(i){
+#      
+#      statmod::power.fisher.test(
+#        p1 = special[1] / total[1],
+#        p2 = special[i] / total[i],
+#       n1 = total[1], n2 = total[i]
+#     )
+#
+#    })
   ) %>%
   dplyr::select(
     origin, annotation, total, 
     onco, onco.p.value, onco.power, 
     special, special.p.value, special.power
-  ) 
+) 
 
 ## Off-target sequence analysis ----
 ft_MESL <- matched_algns %>%
